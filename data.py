@@ -125,10 +125,10 @@ def configure_data_set(ds, info, is_training, batch_size, **kwargs):
     return ds
 
 # rescale ve [0, 1]
-def normalize(images, labels): 
-    images = tf.cast(images, tf.float32)
-    images /= 255 
-    return images, labels 
+# def normalize(images, labels): 
+#     images = tf.cast(images, tf.float32)
+#     images /= 255 
+#     return images, labels 
 
 # load va xu li data 
 def data_load(db_name, with_info, **kwargs):
