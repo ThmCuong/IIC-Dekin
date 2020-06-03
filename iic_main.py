@@ -41,8 +41,20 @@ class ClusterIIC(object):
         # configure performance plotting 
         self.fig_learn , self.ax_learn = plt.subplots(1,2)
 
-    def train(self,graph, TRAIN_SET, TEST_SET, num_epochs = 10):
+    def _build(self, x, gx, graph):
         1
+    def __performance_dictionary_init(self, num_epochs):
+        1
+    
+    def plot_learning_curve(self, epochs):
+        1
+    def train(self,graph, train_set, test_set, num_epochs = 10, early_stop_buffer = 15):
+        # construct interator 
+        iterator = tf.compat.v1.data.make_initializable_iterator(train_set) 
+        x, gx, y = iterator.get_next().values()
+
+        #
+        train_iter_init = iterator
 # data 
 DATA_SET = 'mnist'
 
