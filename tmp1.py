@@ -25,3 +25,6 @@ print(list(ds.as_numpy_iterator()))
 t = ds.map(lambda d: { 'x':fixMap(d['a'])})
 print(list(t.as_numpy_iterator()))
 # print(" tf.shape emls: ", tf.shape(dataset))
+
+
+

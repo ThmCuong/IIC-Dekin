@@ -71,7 +71,9 @@ def mnist_gx(x_org, mdl_input_dim, is_training, sample_repeats):
     x2 = tf.image.random_crop(gx, tf.concat((tf.shape(gx)[:1], [20, 20],[n_chans]), axis=0))
     x3 = tf.image.random_crop(gx, tf.concat((tf.shape(gx)[:1], [24, 24],[n_chans]), axis=0))
 
-    gx = tf.stack([x1, x2, x3])
+    gx = tf.stack([tf.image.resize(x1, height_width), 
+                    tf.image.resize(x2, height_width), 
+                    tf.image.resize(x3, height_width)])
     gx = tf.transpose(gx, [1, 0, 2, 3, 4])
 
     # we only need one between x1, x2, x3
@@ -98,20 +100,28 @@ def mnist_gx(x_org, mdl_input_dim, is_training, sample_repeats):
  
 
 def pre_process_data(ds, info, is_training, **kwargs):
-    if info.name == 'nmist':
+    if info.name == 'mnist':
         return ds.map(lambda d: {
                                 'x': mnist_x(d['image'], 
-                                            kwargs['mdl_input_dim'],
+                                            mdl_input_dim= kwargs['mdl_input_dim'],
                                             is_training = is_training),
                                 'gx': mnist_gx(d['image'],
-                                                kwargs['mdl_input_dim'],
-                                                is_training),
+                                                mdl_input_dim= kwargs['mdl_input_dim'],
+                                                is_training = is_training,
+                                                sample_repeats= kwargs['num_repeats']),
                                 'label': d['label']
                                 }, 
-                        num_parralel_calls = tf.data.experimental.AUTOTUNE)
+                        num_parallel_calls = tf.data.experimental.AUTOTUNE)
+    else:
+        raise Exception("unsuorted data set: " + info.name)
 
 def configure_data_set(ds, info, is_training, batch_size, **kwargs):
-
+    '''
+    ds: dataset
+    info: data info
+    is_training: is this training data
+    batch_size:number of elms in batch size of data
+    '''
     #shuffle the data 
     ds = ds.shuffle(10* batch_size, reshuffle_each_iteration = True).repeat(1) 
 
@@ -119,9 +129,11 @@ def configure_data_set(ds, info, is_training, batch_size, **kwargs):
     ds = ds.batch(batch_size) # elm in ds: 700, 28, 28, 1
     # each batch: 700
     #preprocess data
+    # print(ds)
     with tf.device("/cpu:0"):
         ds = pre_process_data(ds, info, is_training, **kwargs)
     ds = ds.prefetch(buffer_size = tf.data.experimental.AUTOTUNE)
+    # print(type(ds))
     return ds
 
 # rescale ve [0, 1]
@@ -133,7 +145,7 @@ def configure_data_set(ds, info, is_training, batch_size, **kwargs):
 # load va xu li data 
 def data_load(db_name, with_info, **kwargs):
     # load data
-    dataset, metadata = tfds.load(db_name, split = 'train + test',with_info = with_info)
+    dataset, metadata = tfds.load(db_name, split = 'train[:10%]+test[:10%]',with_info = with_info)
     # train_dataset, test_dataset = dataset['train'], dataset['test'] 
     # image size : (28, 28, 1) -- mnist
     # # scale to [0, 1]
@@ -143,7 +155,7 @@ def data_load(db_name, with_info, **kwargs):
     # save to cache, make training faster 
     # train_dataset = train_dataset.cache()
     # test_dataset = test_dataset.cache() 
-
+    print(type(dataset))
     if 'train' in metadata.splits:
         train_ds = configure_data_set(ds = dataset, info = metadata, is_training= True, **kwargs)
     else:
